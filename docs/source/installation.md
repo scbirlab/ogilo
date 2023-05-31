@@ -5,7 +5,7 @@
 Install the pre-compiled version from PyPI:
 
 ```bash
-pip install ogilo
+pip install ogilo-array
 ```
 
 ## From source

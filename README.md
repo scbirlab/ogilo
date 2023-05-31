@@ -20,7 +20,7 @@ libraries as one oligo pool and selectively PCR each one as needed.
 Install the pre-compiled version from PyPI:
 
 ```bash
-pip install ogilo
+pip install ogilo-array
 ```
 
 ### From source
