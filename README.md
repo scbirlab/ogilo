@@ -1,8 +1,8 @@
 # ⛓️ ogilo
 
-![GitHub Workflow Status (with branch)](https://img.shields.io/github/actions/workflow/status/scbirlab/ogilo/python-publish.yml?branch=main)
-![PyPI - Python Version](https://img.shields.io/pypi/pyversions/ogilo)
-![PyPI](https://img.shields.io/pypi/v/ogilo)
+![GitHub Workflow Status (with branch)](https://img.shields.io/github/actions/workflow/status/scbirlab/ogilo/python-publish.yml)
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/ogilo-array)
+![PyPI](https://img.shields.io/pypi/v/ogilo-array)
 
 Automating construction of oligo library sequences for oligo array synthesis.
 
