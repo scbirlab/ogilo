@@ -1,5 +1,5 @@
 [project]
-name = "ogilo"
+name = "ogilo-array"
 version = "0.0.1"
 authors = [
   { name="Eachan Johnson", email="eachan.johnson@crick.ac.uk" },
