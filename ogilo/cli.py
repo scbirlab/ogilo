@@ -29,13 +29,20 @@ def _parse_inputs(inputs=Sequence[str],
                              'file:oligos.csv:1:2:3 seq:ATCGTAT')
         
         this_input = Input(*splits)
+        
+        if this_input.type.startswith('@'):
+
+            this_input = this_input._replace(type=this_input.type.lstrip('@'),
+                                             reverse=True)
 
         if this_input.type == 'file':
 
-            filename = this_input.seq            
+            filename, is_reverse = this_input.seq, this_input.reverse
+
             file_content = extract_col(open(filename, 'r'), 
                                        this_input.f1 or 1, 
-                                       sep=sep)
+                                       sep=sep, 
+                                       is_seq=True)
             
             if this_input.f2 is not None:
                 names = extract_col(open(filename, 'r'), 
@@ -51,38 +58,35 @@ def _parse_inputs(inputs=Sequence[str],
             else:
                 groups = [None] * len(file_content)
 
-            this_input = (Seq(name=name, 
-                              seq=seq, 
-                              group=group, 
-                              type='file') 
-                          for seq, name, group in zip(file_content, names, groups))
+            seq = (Seq(name=name, 
+                       seq=seq,
+                       group=group, 
+                       type='file',
+                       reverse=is_reverse) 
+                   for seq, name, group in zip(file_content, names, groups))
 
         elif this_input.type == 'seq':
 
-            this_input = Seq(name=this_input.f1, 
-                             seq=this_input.seq, 
-                             group=None, 
-                             type=this_input.type)
+              seq = Seq(name=this_input.f1, 
+                      seq=this_input.seq,
+                      group=None, 
+                      type=this_input.type,
+                      reverse=this_input.reverse)
 
         elif this_input.type == 're':
 
-            seq = sq.sequences.re_sites[this_input.seq]
-
-            if this_input.f1.casefold() == 'r':
-
-                seq = sq.reverse_complement(seq)
-
-            this_input = Seq(name=this_input.seq + '_' + this_input.f1.casefold(), 
-                             seq=seq, 
-                             group=None, 
-                             type=this_input.type)
+            seq = Seq(name=this_input.seq + '_' + ('r' if this_input.reverse else 'f'), 
+                      seq=sq.sequences.re_sites[this_input.seq], 
+                      group=None, 
+                      type=this_input.type,
+                      reverse=this_input.reverse)
 
         else:
 
             raise ValueError(f'Type {this_input.type} is not supported. '
                              'Allowed types: seq, file, re.')
         
-        parsed.append(this_input)
+        parsed.append(seq)
 
     return parsed
         
@@ -224,7 +228,7 @@ def main() -> None:
     parser.add_argument('--format', '-f', 
                         type=str,
                         default='TSV',
-                        choices=['TSV', 'CSV'],
+                        choices=['TSV', 'CSV', 'tsv', 'csv'],
                         help='Format of files. Default: %(default)s')
     parser.add_argument('--output', '-o', 
                         type=argparse.FileType('w'),

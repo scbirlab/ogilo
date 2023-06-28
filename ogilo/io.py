@@ -3,6 +3,7 @@ import csv
 import sys
 
 import nemony as nm
+import streq as sq
 from tqdm import tqdm
 
 from .checks import re_sites
@@ -11,7 +12,8 @@ from .utils import grouping_key
 
 def extract_col(f: TextIO, 
                 col: Union[str, int], 
-                sep: str = '\t') -> Tuple[str]:
+                sep: str = '\t',
+                is_seq: bool = False) -> Tuple[str]:
     
     """Get a column from a CSV or TSV by number or name.
 
@@ -28,6 +30,8 @@ def extract_col(f: TextIO,
         The column to return
     sep : str
         Delimiter character for the columns
+    is_seq : bool, optional
+        If True, checks that only nucleic acid symbols are present
 
     Returns
     -------
@@ -45,7 +49,19 @@ def extract_col(f: TextIO,
 
         c = csv.DictReader(f, delimiter=sep)
 
-    return tuple(map(lambda x: x[col], c))
+    coldata = tuple(map(lambda x: x[col], c))
+
+    alphabet = set(letter for seq in coldata for letter in seq)
+    xna = sorted(set(sq.sequences.DNA) | set(sq.sequences.RNA) | set(list('NRYWSVB')))
+    alpha_not_in_xna = sorted(letter for letter in alphabet
+                              if not letter.upper() in xna)
+
+    if is_seq:
+        assert len(alpha_not_in_xna) == 0, \
+            (f"There are {len(alpha_not_in_xna)} characters not in {''.join(xna)}: {''.join(alpha_not_in_xna)}. "
+             "Did you use an integer instead of a named header for your sequence?")
+
+    return coldata
 
 
 def write_constructs(x: Sequence[Oligo],
@@ -82,7 +98,9 @@ def write_constructs(x: Sequence[Oligo],
     try:
         for row in tqdm(x, disable=len(x) < 100):
             
-            seq = ''.join(upper_lower(seq.seq, i) 
+            seq = ''.join(upper_lower(seq.seq if not seq.reverse 
+                                      else sq.reverse_complement(seq.seq), 
+                                      i) 
                           for i, seq in enumerate(row))
             
             group = grouping_key(row)

@@ -27,11 +27,13 @@ def _load_pcr_handles(filename: str) -> Sequence[PCRHandle]:
         pcr_handles.append(handle._replace(f=Seq(group=None,
                                                  seq=handle.f,
                                                  name=handle.name + '_f',
-                                                 type='handle'),
+                                                 type='handle',
+                                                 reverse=False),
                                            r=Seq(group=None,
                                                  seq=handle.r,
                                                  name=handle.name + '_r',
-                                                 type='handle')))
+                                                 type='handle',
+                                                 reverse=False)))
     return tuple(pcr_handles)   
 
 
