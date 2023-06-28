@@ -94,16 +94,16 @@ Simple example showing parts being concatenated. Note that group and pcr_handles
 
 ```bash
 $ ogilo seq:ATCG:s1 re:BsmBI seq:GGCCTTAA:main @re:BsaI seq:CATG:s2
-group   pcr_handles     length  mnemonic        restriction_sites       oligo_name      oligo_sequence
-                28      dim_lesson              s1-BsmBI_f-main-BsaI_r-s2       ATCGcgtctcGGCCTTAAgagaccCATG
+group pcr_handles length mnemonic restriction_sites oligo_name                oligo_sequence
+                   28    immense_memo               s1-BsmBI_f-main-BsaI_r-s2 ATCGcgtctcGGCCTTAAgagaccCATG
 ```
 
 You can ask for a seqment to be reverse complemented by prepending the directive with `@`.
 
 ```bash
 $ ogilo @seq:ATCG:s1 re:BsmBI seq:GGCCTTAA:main @re:BsaI seq:CATG:s2
-group   pcr_handles     length  mnemonic        restriction_sites       oligo_name      oligo_sequence
-                28      dim_lesson              s1-BsmBI_f-main-BsaI_r-s2       ATCGcgtctcGGCCTTAAgagaccCATG
+group pcr_handles length mnemonic restriction_sites oligo_name                oligo_sequence
+                   28    immense_memo               s1-BsmBI_f-main-BsaI_r-s2 CGATcgtctcGGCCTTAAgagaccCATG
 ```
 
 You can request PCR handles. These are the outermost sections of the sequence.
