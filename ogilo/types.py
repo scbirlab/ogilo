@@ -1,3 +1,5 @@
+"""Custom types and objects used in ogilo."""
+
 from typing import Sequence
 from collections import namedtuple
 

@@ -1,3 +1,5 @@
+"""Functions for checking potential sequence problems."""
+
 from collections import Counter
 
 from .utils import n_found

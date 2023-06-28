@@ -1,3 +1,5 @@
+"""Functions for file input and output."""
+
 from typing import Sequence, TextIO, Tuple, Union
 import csv
 import sys

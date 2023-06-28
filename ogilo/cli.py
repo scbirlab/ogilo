@@ -3,6 +3,7 @@
 from typing import Sequence
 import argparse
 from itertools import groupby
+import os
 import sys
 import textwrap
 
@@ -38,6 +39,8 @@ def _parse_inputs(inputs=Sequence[str],
         if this_input.type == 'file':
 
             filename, is_reverse = this_input.seq, this_input.reverse
+            file_extension = os.path.splitext(filename)[-1].casefold()
+            sep = ',' if file_extension == '.csv' else sep
 
             file_content = extract_col(open(filename, 'r'), 
                                        this_input.f1 or 1, 
