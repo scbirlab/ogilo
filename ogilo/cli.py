@@ -1,39 +1,20 @@
 """Command-line interface for ogilo."""
 
-from typing import TextIO
-from collections.abc import Sequence
+from typing import Sequence
 import argparse
-from collections import Counter
-import csv
 from itertools import groupby
+import os
 import sys
 import textwrap
 
-import nemony as nm
 import streq as sq
-from tqdm import tqdm
 
-from .utils import _get_pcr_handles, Input, _Sequence
-
-
-def _get_col_from_file(f: TextIO, 
-                       col: str, 
-                       sep: str = '\t') -> Sequence[str]:
-
-    if col.isdigit():
-
-        c = csv.reader(f, delimiter=sep)
-        col = int(col) - 1
-
-    else:
-
-        c = csv.DictReader(f, delimiter=sep)
-
-    return tuple(map(lambda x: x[col], c))
-
+from .io import extract_col, write_constructs 
+from .types import Input, Oligo, Seq
+from .utils import _get_pcr_handles, grouping_key
 
 def _parse_inputs(inputs=Sequence[str], 
-                  sep='\t') -> Sequence[Sequence[_Sequence]]:
+                  sep='\t') -> Sequence[Oligo]:
 
     parsed = []
 
@@ -49,67 +30,73 @@ def _parse_inputs(inputs=Sequence[str],
                              'file:oligos.csv:1:2:3 seq:ATCGTAT')
         
         this_input = Input(*splits)
+        
+        if this_input.type.startswith('@'):
+
+            this_input = this_input._replace(type=this_input.type.lstrip('@'),
+                                             reverse=True)
 
         if this_input.type == 'file':
 
-            filename = this_input.seq            
-            file_content = _get_col_from_file(open(filename, 'r'), 
-                                              this_input.f1 or 1, 
-                                              sep=sep)
+            filename, is_reverse = this_input.seq, this_input.reverse
+            file_extension = os.path.splitext(filename)[-1].casefold()
+            sep = ',' if file_extension == '.csv' else sep
+
+            file_content = extract_col(open(filename, 'r'), 
+                                       this_input.f1 or 1, 
+                                       sep=sep, 
+                                       is_seq=True)
             
             if this_input.f2 is not None:
-                names = _get_col_from_file(open(filename, 'r'), 
-                                           this_input.f2, 
-                                           sep=sep)
+                names = extract_col(open(filename, 'r'), 
+                                    this_input.f2, 
+                                    sep=sep)
             else:
                 names = map(str, range(1, len(file_content) + 1))
                 
             if this_input.f3 is not None:
-                groups =  _get_col_from_file(open(filename, 'r'), 
-                                             this_input.f3, 
-                                             sep=sep)
+                groups =  extract_col(open(filename, 'r'), 
+                                      this_input.f3, 
+                                      sep=sep)
             else:
                 groups = [None] * len(file_content)
 
-            this_input = (_Sequence(name=name, 
-                                    seq=seq, 
-                                    group=group, 
-                                    type='file') 
-                          for seq, name, group in zip(file_content, names, groups))
+            seq = (Seq(name=name, 
+                       seq=seq,
+                       group=group, 
+                       type='file',
+                       reverse=is_reverse) 
+                   for seq, name, group in zip(file_content, names, groups))
 
         elif this_input.type == 'seq':
 
-            this_input = _Sequence(name=this_input.f1, 
-                                   seq=this_input.seq, 
-                                   group=None, 
-                                   type=this_input.type)
+              seq = Seq(name=this_input.f1, 
+                      seq=this_input.seq,
+                      group=None, 
+                      type=this_input.type,
+                      reverse=this_input.reverse)
 
         elif this_input.type == 're':
 
-            seq = sq.sequences.re_sites[this_input.seq]
-
-            if this_input.f1.casefold() == 'r':
-
-                seq = sq.reverse_complement(seq)
-
-            this_input = _Sequence(name=this_input.seq + '_' + this_input.f1.casefold(), 
-                                   seq=seq, 
-                                   group=None, 
-                                   type=this_input.type)
+            seq = Seq(name=this_input.seq + '_' + ('r' if this_input.reverse else 'f'), 
+                      seq=sq.sequences.re_sites[this_input.seq], 
+                      group=None, 
+                      type=this_input.type,
+                      reverse=this_input.reverse)
 
         else:
 
             raise ValueError(f'Type {this_input.type} is not supported. '
                              'Allowed types: seq, file, re.')
         
-        parsed.append(this_input)
+        parsed.append(seq)
 
     return parsed
         
 
-def  _generate_combos(x: Sequence[Sequence[_Sequence]]) -> Sequence[Sequence[_Sequence]]:
+def _generate_combos(x: Sequence[Oligo]) -> Sequence[Oligo]:
 
-    x = tuple(tuple([_x]) if isinstance(_x, _Sequence) 
+    x = tuple(tuple([_x]) if isinstance(_x, Seq) 
               else tuple(_x) for _x in x)
 
     max_len = max(len(_x) for _x in x)
@@ -125,103 +112,18 @@ def  _generate_combos(x: Sequence[Sequence[_Sequence]]) -> Sequence[Sequence[_Se
     return tuple(zip(*x))
 
 
-def _findall(p, s):
-    '''Yields all the positions of
-    the pattern p in the string s.'''
-    s = s.upper()
-    i = s.find(p)
-    while i != -1:
-        yield i
-        i = s.find(p, i+1)
-
-
-def _n_found(p, s, with_rc=True):
-
-    n_found = len(list(_findall(p, s)))
-
-    if with_rc:
-
-        n_found += len(list(_findall(sq.reverse_complement(p), s)))
-
-    return n_found
-
-    
-def check_re_sites(row, seq):
-
-    allowed_re_sites = Counter(seq.name.split('_')[0] 
-                               for seq in row if seq.type == 're')
-    found_allowed_re_sites = Counter({n: _n_found(sq.sequences.re_sites[n], seq, with_rc=True) 
-                                      for n in allowed_re_sites})
-    residual = found_allowed_re_sites - allowed_re_sites
-    re_sites = set(sq.which_re_sites(seq)) - set(site for site in allowed_re_sites if residual[site] == 0)
-
-    return re_sites
-
-
-def _write_constructs(x: Sequence[Sequence[_Sequence]],
-                      output: TextIO) -> None:
-
-    c = csv.DictWriter(output, 
-                       fieldnames=('group', 'pcr_handles', 'length', 'mnemonic', 
-                                   'restriction_sites', 'oligo_name', 'oligo_sequence'),
-                       delimiter='\t')
-    c.writeheader()
-
-    def upper_lower(x, i):
-
-        return x.casefold() if i % 2 > 0 else x.upper()
-
-    try:
-        for row in tqdm(x, disable=len(x) < 100):
-            
-            seq = ''.join(upper_lower(seq.seq, i) 
-                          for i, seq in enumerate(row))
-
-            re_sites = check_re_sites(row, seq)
-            group = _keyfun(row)
-
-            try:
-                handles = list(set(seq.name.split('_')[0] 
-                                   for seq in row if seq.type == 'handle'))[0]
-            except IndexError:
-                handles = None
-
-            name = ('-'.join(seq.name for seq in row 
-                             if seq.name is not None and seq.type != 'handle'))
-            
-            c.writerow(dict(group=group, 
-                            pcr_handles=handles,
-                            length=str(len(seq)), 
-                            mnemonic=nm.encode(seq), 
-                            restriction_sites=';'.join(re_sites), 
-                            oligo_name=name, 
-                            oligo_sequence=seq))
-
-    except BrokenPipeError:
-
-        pass
-
-    return None
-
-
-def _keyfun(x: Sequence[_Sequence]) -> str:
-
-    return '-'.join(map(lambda y: y.group, 
-                        filter(lambda y: y.group is not None, x)))
-
-
-def _add_pcr_handles(seqs: Sequence[Sequence[_Sequence]], 
+def _add_pcr_handles(seqs: Sequence[Oligo], 
                      handle_set: str = 'all',
-                     grouped: bool = False) -> Sequence[Sequence[_Sequence]]:
+                     grouped: bool = False) -> Sequence[Oligo]:
     
     _pcr_handles = _get_pcr_handles(handle_set)
 
     if not grouped:
         return tuple((_pcr_handles[0].f, ) + seq + (_pcr_handles[0].r, ) for seq in seqs)
     else:
-        seqs = sorted(seqs, key=_keyfun)
+        seqs = sorted(seqs, key=grouping_key)
         grouped_seqs = tuple((k, tuple(g)) 
-                             for k, g in groupby(seqs, _keyfun))
+                             for k, g in groupby(seqs, grouping_key))
 
         n_groups = len(grouped_seqs)
         n_handles = len(_pcr_handles)
@@ -235,7 +137,7 @@ def _add_pcr_handles(seqs: Sequence[Sequence[_Sequence]],
 
 def _assemble(args: argparse.Namespace) -> None:
 
-    sep = dict(TSV='\t', CSV=',')[args.format]
+    sep = dict(TSV='\t', CSV=',')[args.format.upper()]
 
     constructs = _parse_inputs(args.inputs, sep)
 
@@ -246,7 +148,7 @@ def _assemble(args: argparse.Namespace) -> None:
                                       handle_set=args.handle_set, 
                                       grouped=True)
 
-    _write_constructs(constructs, args.output)
+    write_constructs(constructs, args.output)
 
     return None
 
@@ -329,7 +231,7 @@ def main() -> None:
     parser.add_argument('--format', '-f', 
                         type=str,
                         default='TSV',
-                        choices=['TSV', 'CSV'],
+                        choices=['TSV', 'CSV', 'tsv', 'csv'],
                         help='Format of files. Default: %(default)s')
     parser.add_argument('--output', '-o', 
                         type=argparse.FileType('w'),

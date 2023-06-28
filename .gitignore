@@ -9,6 +9,7 @@
 .idea
 .vscode
 /test/*.tsv
+/test/*.csv
 /*/__pycache__
 
 # virtualenv/venv directories
