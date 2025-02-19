@@ -8,7 +8,12 @@ import streq as sq
 
 from .types import Oligo, PCRHandle, Seq
 
-PCR_HANDLE_SETS = ('sanson2018', 'illumina')
+PCR_HANDLE_SETS = (
+    'subramanian2018',
+    'sanson2018', 
+    'winston2022', 
+    'illumina', 
+)
 
 def _load_pcr_handles(filename: str) -> Sequence[PCRHandle]:
 
