@@ -55,7 +55,7 @@ do
         "$fw_seq_file" "$rv_seq_file" \
     | cut -d, -f2- \
     | awk -F, -v OFS=, -v inp_id="$inp_id" \
-        'NR == 1 { print $1,$2,$4 } NR > 1 { print inp_id"_"$1"."$3,$2,$4 }' \
+        'NR == 1 { print $1,$2,$4 } NR > 1 { print inp_id"-"$1"."$3,$2,$4 }' \
     > "$this_output_file"
 
 done
