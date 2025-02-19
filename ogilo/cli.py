@@ -9,6 +9,7 @@ import textwrap
 
 import streq as sq
 
+from . import __version__
 from .io import extract_col, write_constructs 
 from .types import Input, Oligo, Seq
 from .utils import _get_pcr_handles, grouping_key
@@ -144,9 +145,11 @@ def _assemble(args: argparse.Namespace) -> None:
     constructs = _generate_combos(constructs)
 
     if args.pcr_handles:
-        constructs = _add_pcr_handles(constructs, 
-                                      handle_set=args.handle_set, 
-                                      grouped=True)
+        constructs = _add_pcr_handles(
+            constructs, 
+            handle_set=args.handle_set, 
+            grouped=True,
+        )
 
     write_constructs(constructs, args.output)
 
@@ -185,7 +188,7 @@ def main() -> None:
             Sequence for the oligo.
 
     For example:
-    $ ogilo re:BsmBI:f file:test/guides-RLC12_mapped-tiny.tsv:guide_sequence:Name:ann_gene_biotype re:BsmBI:r -p
+    $ ogilo re:BsmBI file:test/guides-RLC12_mapped-tiny.tsv:guide_sequence:Name:ann_gene_biotype @re:BsmBI -p
     group   pcr_handles   length  mnemonic     restriction_sites  oligo_name                                    oligo_sequence
     rRNA    sans18a         74      brief_nadia             BsmBI_f-_up-rrs-1471818-ultimate_parody-BsmBI_r  AGGCACTTGCTCGTACGACGcgtctcAACCCAAACACTCCCTTTGGAAgagacgATGTGGGCCCGGCACCTTAA
     rRNA    sans18a         73      rancid_kayak            BsmBI_f-_up-rrs-1471818-nostalgic_sonata-BsmBI_r AGGCACTTGCTCGTACGACGcgtctcACCCAAACACTCCCTTTGGAAgagacgATGTGGGCCCGGCACCTTAA
@@ -225,7 +228,7 @@ def main() -> None:
     parser.add_argument('--handle_set', '-s', 
                         type=str,
                         default='all',
-                        help='Which set of PCR handles to use. Either "all", "sanson2018", "illumina", or '
+                        help='Which set of PCR handles to use. Either "all", "sanson2018", "illumina", "subramanian2018", "winston2022", or '
                              'a path to a CSV with column headings pcr_handle_id, pcr_handle_f, pcr_handle_r. '
                              'Default: %(default)s')
     parser.add_argument('--format', '-f', 

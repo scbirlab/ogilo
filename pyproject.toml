@@ -8,7 +8,7 @@ description = "Automated construction of oligo library sequences for oligo array
 readme = "README.md"
 requires-python = ">=3.8"
 license = {file = "LICENSE"}
-keywords = ["biology", "bioinformatics", "science", "assay", "sequencing", "oligonucleotides", "oligos"]
+keywords = ["biology", "bioinformatics", "biotechnology", "science", "assay", "sequencing", "oligonucleotides", "oligos"]
 
 classifiers = [  
   
@@ -24,13 +24,16 @@ classifiers = [
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: 3 :: Only",
 ]
 
 dependencies = [ 
   "nemony",
   "streq",
-  "tqdm"
+  "tqdm",
+  "pytest",
 ]
 
 [project.urls]
@@ -41,9 +44,10 @@ dependencies = [
 ogilo = "ogilo.cli:main"
 
 [tool.setuptools]
+packages = ["ogilo"]
 # If there are data files included in your packages that need to be
 # installed, specify them here.
-package-data = {"ogilo" = ["*.csv"]}
+package-data = {"ogilo" = ["data/handles/*-pcr-handles.csv"]}
 
 [build-system]
 # These are the assumed default build requirements from pip:
