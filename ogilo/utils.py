@@ -18,36 +18,44 @@ PCR_HANDLE_SETS = (
 def _load_pcr_handles(filename: str) -> Sequence[PCRHandle]:
 
     with open(filename, 'r') as f:
-    
         c = csv.DictReader(f, delimiter=',')
-
-        pcr_handles0 = tuple(PCRHandle(name=row['pcr_handle_id'],
-                                       f=row['pcr_handle_f'],
-                                       r=row['pcr_handle_r']) 
-                             for row in c)
+        pcr_handles0 = tuple(
+            PCRHandle(
+                name=row['pcr_handle_id'],
+                f=row['pcr_handle_f'],
+                r=row['pcr_handle_r'],
+            ) for row in c)
     pcr_handles = []
 
     for handle in pcr_handles0:
-
-        pcr_handles.append(handle._replace(f=Seq(group=None,
-                                                 seq=handle.f,
-                                                 name=handle.name + '_f',
-                                                 type='handle',
-                                                 reverse=False),
-                                           r=Seq(group=None,
-                                                 seq=handle.r,
-                                                 name=handle.name + '_r',
-                                                 type='handle',
-                                                 reverse=False)))
+        pcr_handles.append(handle._replace(
+            f=Seq(
+                group=None,
+                seq=handle.f,
+                name=handle.name + '_f',
+                type='handle',
+                reverse=False,
+            ),
+            r=Seq(
+                group=None,
+                seq=handle.r,
+                name=handle.name + '_r',
+                type='handle',
+                reverse=False,
+            ),
+        ))
     return tuple(pcr_handles)   
 
 
 def _get_pcr_handles(handle_set: str) -> Sequence[PCRHandle]:
 
     if handle_set in PCR_HANDLE_SETS:
-
-        this_data_path = os.path.join(os.path.dirname(__file__), 
-                                    f'{handle_set}-pcr-handles.csv')
+        this_data_path = os.path.join(
+            os.path.dirname(__file__), 
+            "data",
+            "handles",
+            f'{handle_set}-pcr-handles.csv',
+        )
         pcr_handles = _load_pcr_handles(this_data_path)
     
     elif handle_set == 'all':
@@ -84,6 +92,17 @@ def find_all(p: str,
     int
         Position in `s` of each instance of `p`
 
+    Examples
+    --------
+    >>> list(find_all("P", "Primer"))
+    [0]
+    >>> list(find_all("e", "Primer"))
+    [4]
+    >>> list(find_all("r", "Primer"))
+    [1, 5]
+    >>> list(find_all("a", "Primer"))
+    []
+
     """
 
     s = s.upper()
@@ -115,6 +134,17 @@ def n_found(p: str,
     -------
     int
         The number of occurences of `p` in `s`
+
+    Examples
+    --------
+    >>> n_found("P", "Primer")
+    1
+    >>> n_found("e", "Primer")
+    1
+    >>> n_found("r", "Primer")
+    2
+    >>> n_found("a", "Primer")
+    0
         
     """
 
