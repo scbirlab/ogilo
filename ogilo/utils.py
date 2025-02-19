@@ -137,23 +137,20 @@ def n_found(p: str,
 
     Examples
     --------
-    >>> n_found("P", "Primer")
-    1
-    >>> n_found("e", "Primer")
-    1
-    >>> n_found("r", "Primer")
+    >>> n_found("A", "ATCG")
     2
-    >>> n_found("a", "Primer")
-    0
+    >>> n_found("A", "AACG")
+    2
+    >>> n_found("A", "ACCG")
+    1
+    >>> n_found("A", "ATCG", with_rc=False)
+    1
         
     """
 
     n = len(list(find_all(p, s)))
-
     if with_rc:
-
         n += len(list(find_all(sq.reverse_complement(p), s)))
-
     return n
 
 
