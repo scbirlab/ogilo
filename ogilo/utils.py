@@ -78,7 +78,9 @@ def _get_pcr_handles(handle_set: str) -> Sequence[PCRHandle]:
 def find_all(p: str, 
              s: str) -> Sequence[int]:
     
-    """Find all instances of pattern p in the string s.
+    """Find all instances of pattern p in the string s. 
+
+    Note: this function is case-insensitive.
 
     Parameters
     ----------
@@ -94,7 +96,7 @@ def find_all(p: str,
 
     Examples
     --------
-    >>> list(find_all("P", "Primer"))
+    >>> list(find_all("p", "Primer"))
     [0]
     >>> list(find_all("e", "Primer"))
     [4]
@@ -105,13 +107,12 @@ def find_all(p: str,
 
     """
 
-    s = s.upper()
+    p = p.casefold()
+    s = s.casefold()
     i = s.find(p)
 
     while i != -1:
-
         yield i
-
         i = s.find(p, i + 1)
 
 
