@@ -43,7 +43,7 @@ ogilo = "ogilo.cli:main"
 [tool.setuptools]
 # If there are data files included in your packages that need to be
 # installed, specify them here.
-package-data = {"ogilo" = ["*.csv"]}
+package-data = {"ogilo" = ["data/handles/*-pcr-handles.csv"]}
 
 [build-system]
 # These are the assumed default build requirements from pip:
