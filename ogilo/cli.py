@@ -9,6 +9,7 @@ import textwrap
 
 import streq as sq
 
+from . import __version__
 from .io import extract_col, write_constructs 
 from .types import Input, Oligo, Seq
 from .utils import _get_pcr_handles, grouping_key
@@ -144,9 +145,11 @@ def _assemble(args: argparse.Namespace) -> None:
     constructs = _generate_combos(constructs)
 
     if args.pcr_handles:
-        constructs = _add_pcr_handles(constructs, 
-                                      handle_set=args.handle_set, 
-                                      grouped=True)
+        constructs = _add_pcr_handles(
+            constructs, 
+            handle_set=args.handle_set, 
+            grouped=True,
+        )
 
     write_constructs(constructs, args.output)
 
